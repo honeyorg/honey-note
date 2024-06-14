@@ -4,29 +4,18 @@
     "type": "split",
     "children": [
       {
-        "id": "93820c4476ac63cb",
+        "id": "4173481b0b2ab90f",
         "type": "tabs",
         "children": [
           {
-            "id": "9703cc0bf67e375e",
+            "id": "61e11463891ae3e3",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {}
-            }
-          }
-        ]
-      },
-      {
-        "id": "8d4d0f7d39969ee4",
-        "type": "tabs",
-        "children": [
-          {
-            "id": "ae48f881d33402b9",
-            "type": "leaf",
-            "state": {
-              "type": "graph",
-              "state": {}
+              "type": "diff-view",
+              "state": {
+                "file": ".obsidian/app.json",
+                "staged": false
+              }
             }
           }
         ]
@@ -41,6 +30,7 @@
       {
         "id": "bd1e27682a5c8654",
         "type": "tabs",
+        "dimension": 56.93527080581242,
         "children": [
           {
             "id": "5b61d2226fbb3321",
@@ -52,6 +42,22 @@
               }
             }
           },
+          {
+            "id": "ee6da0e2456faf41",
+            "type": "leaf",
+            "state": {
+              "type": "git-view",
+              "state": {}
+            }
+          }
+        ],
+        "currentTab": 1
+      },
+      {
+        "id": "16804d069be5a5a7",
+        "type": "tabs",
+        "dimension": 43.064729194187585,
+        "children": [
           {
             "id": "3d83eb66ca0089c6",
             "type": "leaf",
@@ -74,8 +80,17 @@
               "type": "bookmarks",
               "state": {}
             }
+          },
+          {
+            "id": "2f3edf459dee752d",
+            "type": "leaf",
+            "state": {
+              "type": "calendar",
+              "state": {}
+            }
           }
-        ]
+        ],
+        "currentTab": 2
       }
     ],
     "direction": "horizontal",
@@ -88,7 +103,16 @@
       {
         "id": "023259da3212d56f",
         "type": "tabs",
+        "dimension": 54.75,
         "children": [
+          {
+            "id": "9080b17bae52d098",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {}
+            }
+          },
           {
             "id": "82ad1d93300f0fd2",
             "type": "leaf",
@@ -128,34 +152,53 @@
             }
           },
           {
-            "id": "9080b17bae52d098",
+            "id": "1dd27773eb98a42e",
             "type": "leaf",
             "state": {
-              "type": "outline",
+              "type": "all-properties",
               "state": {
-                "file": "Welcome.md"
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
               }
+            }
+          }
+        ]
+      },
+      {
+        "id": "df9ff3e7b8f1fb5a",
+        "type": "tabs",
+        "dimension": 45.25,
+        "children": [
+          {
+            "id": "d3b8eebadc75a856",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {}
             }
           }
         ]
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "left-ribbon": {
     "hiddenItems": {
-      "switcher:打开快速切换": false,
       "graph:查看关系图谱": false,
-      "canvas:新建白板": false,
-      "daily-notes:打开/创建今天的日记": false,
-      "templates:插入模板": false,
-      "command-palette:打开命令面板": false
+      "templater-obsidian:Templater": false,
+      "switcher:打开快速切换": false,
+      "command-palette:打开命令面板": false,
+      "workspaces:管理工作区布局": false,
+      "random-note:开始漫游笔记": false,
+      "table-editor-obsidian:Advanced Tables Toolbar": false,
+      "obsidian-excalidraw-plugin:新建绘图文件": false
     }
   },
-  "active": "5b61d2226fbb3321",
+  "active": "61e11463891ae3e3",
   "lastOpenFiles": [
+    "未命名.md",
     "Welcome.md"
   ]
 }
