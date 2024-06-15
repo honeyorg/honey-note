@@ -6,11 +6,11 @@
         "type": "split",
         "children": [
           {
-            "id": "4173481b0b2ab90f",
+            "id": "b89c511dbba66de6",
             "type": "tabs",
             "children": [
               {
-                "id": "61e11463891ae3e3",
+                "id": "219d93c2bd6ce968",
                 "type": "leaf",
                 "state": {
                   "type": "empty",
@@ -86,9 +86,21 @@
                   "type": "calendar",
                   "state": {}
                 }
+              },
+              {
+                "id": "61e11463891ae3e3",
+                "type": "leaf",
+                "state": {
+                  "type": "markdown",
+                  "state": {
+                    "file": "electron/tasks.md",
+                    "mode": "source",
+                    "source": false
+                  }
+                }
               }
             ],
-            "currentTab": 2
+            "currentTab": 3
           }
         ],
         "direction": "horizontal",
@@ -194,8 +206,8 @@
           "obsidian-excalidraw-plugin:新建绘图文件": false
         }
       },
-      "active": "9080b17bae52d098",
-      "mtime": "2024-06-15T01:06:01+08:00"
+      "active": "5b61d2226fbb3321",
+      "mtime": "2024-06-15T19:15:35+08:00"
     }
   },
   "active": "default"
