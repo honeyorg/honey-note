@@ -28,5 +28,6 @@
 
 # 相关技术
 
-- [bootstrapstudio](https://bootstrapstudio.io/)
+- [bootstrapstudio](https://bootstrapstudio.io/)收费啊不然不能用
 - [codesandbox](https://codesandbox.io)
+- [Bootstrap入门中文文档](https://v5.bootcss.com/docs/getting-started/introduction/)
