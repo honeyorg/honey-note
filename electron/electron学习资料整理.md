@@ -18,6 +18,7 @@
 - [基于Vue3.0+Electron 19桌面混合开发项目实战教程](https://www.bilibili.com/video/BV1FP4115739?p=33&spm_id_from=pageDriver&vd_source=8d93ec62138c112af1ea8d6ccf035cb1)
 - [Vue3+Electron 项目实战 EasyChat 仿微信](https://www.bilibili.com/video/BV1qz421Y7zR/?spm_id_from=333.337.search-card.all.click&vd_source=8d93ec62138c112af1ea8d6ccf035cb1)
 - [【Udemy付费课程】Electron for Desktop Apps](https://www.bilibili.com/video/BV1pY4y1i7Ac/?spm_id_from=333.337.search-card.all.click&vd_source=8d93ec62138c112af1ea8d6ccf035cb1)
+- [前端开发必备css生成器](https://www.bilibili.com/video/BV11Y411j7Tv/?spm_id_from=333.337.search-card.all.click&vd_source=8d93ec62138c112af1ea8d6ccf035cb1)
 
 # 开源项目
 
@@ -26,3 +27,6 @@
 - [12个electron开源项目](https://www.51cto.com/article/719528.html)
 
 # 相关技术
+
+- [bootstrapstudio](https://bootstrapstudio.io/)
+- [codesandbox](https://codesandbox.io)
