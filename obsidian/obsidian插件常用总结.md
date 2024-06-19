@@ -1,4 +1,7 @@
 #obsidian 
+
+> [!note]+ obsidian官方文档
+> [由此开始](https://publish.obsidian.md/help-zh/)
 # 插件列表
 
 - 待办事项插件：[[tasks插件常用总结]]
