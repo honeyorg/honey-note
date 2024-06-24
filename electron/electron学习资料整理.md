@@ -9,6 +9,7 @@
 - [另一个看着不错的教程](https://www.tutorialspoint.com/electron/electron_system_dialogs.htm)
 - [2024 Beginners Guide](https://www.ropstam.com/electron-js-development/)
 - [在线PDF 英文 入门到精通](https://dl.ebooksworld.ir/motoman/Apress.Electron.From.Beginner.to.Pro.www.EBooksWorld.ir.pdf)
+- [vue官方文档](https://cn.vuejs.org)
 
 # 视频
 
