@@ -1,0 +1,1 @@
+https://plantuml.com/zh/class-diagram
