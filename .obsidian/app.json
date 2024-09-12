@@ -1,7 +1,12 @@
 {
+  "tabSize": 2,
+  "useTab": false,
   "vimMode": true,
-  "promptDelete": false,
-  "alwaysUpdateLinks": true,
   "newFileLocation": "current",
-  "attachmentFolderPath": "./attachments"
+  "alwaysUpdateLinks": true,
+  "attachmentFolderPath": "./resources",
+  "showLineNumber": false,
+  "promptDelete": false,
+  "propertiesInDocument": "visible",
+  "showRibbon": true
 }

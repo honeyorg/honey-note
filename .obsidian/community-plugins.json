@@ -1,14 +1,16 @@
 [
   "table-editor-obsidian",
-  "calendar",
   "dataview",
   "emoji-shortcodes",
-  "obsidian-excalidraw-plugin",
   "obsidian-git",
-  "obsidian-hover-editor",
   "obsidian-mind-map",
-  "obsidian-plantuml",
   "obsidian-tasks-plugin",
   "templater-obsidian",
-  "obsidian-vimrc-support"
+  "cm-chs-patch",
+  "obsidian-vimrc-support",
+  "obsidian-plantuml",
+  "obsidian-style-settings",
+  "obsidian-hover-editor",
+  "calendar",
+  "obsidian-excalidraw-plugin"
 ]

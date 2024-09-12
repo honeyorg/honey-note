@@ -1,5 +1,5 @@
 {
-  "vimrcFileName": ".obsidian/.vimrc",
+  "vimrcFileName": ".obsidian.vimrc",
   "displayChord": true,
   "displayVimMode": false,
   "fixedNormalModeLayout": true,
@@ -35,7 +35,7 @@
     "KeyT": "t",
     "KeyY": "y",
     "Quote": "'",
-    "IntlBackslash": "§",
+    "IntlBackslash": "\\",
     "Backslash": "\\",
     "KeyK": "k",
     "KeyF": "f",

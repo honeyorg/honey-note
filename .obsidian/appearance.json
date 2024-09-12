@@ -1,1 +1,9 @@
-{}
+{
+  "accentColor": "",
+  "cssTheme": "Border",
+  "textFontFamily": "",
+  "interfaceFontFamily": "",
+  "monospaceFontFamily": "",
+  "nativeMenus": false,
+  "theme": "system"
+}

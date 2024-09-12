@@ -1,5 +1,5 @@
 {
-  "folder": "Excalidraw",
+  "folder": "",
   "cropFolder": "",
   "annotateFolder": "",
   "embedUseExcalidrawFolder": false,
@@ -19,7 +19,7 @@
   "cropPrefix": "cropped_",
   "annotatePrefix": "annotated_",
   "annotatePreserveSize": false,
-  "previewImageType": "SVGIMG",
+  "previewImageType": "SVG",
   "allowImageCache": true,
   "displayExportedImageIfAvailable": false,
   "previewMatchObsidianTheme": false,
