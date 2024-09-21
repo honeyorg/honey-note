@@ -1,0 +1,5 @@
+# 问题一：拖拽一次且没有目标可以处理拖放后，UMG不能被再次拖拽
+
+原因：在ts中，设置DragDropOperation的Payload时，传递了this（即umg自身引用）。导致了这种问题，未看ue底层源码，但分析可得知底层在拖放或取消时会对Payload做一些清空释放处理。
+
+解决方案：构造新的DragView用途的UMG，将Drop方所需数据存储在DragView或者DragDropOperation中，去解决
