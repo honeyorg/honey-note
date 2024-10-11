@@ -7,6 +7,6 @@
   "attachmentFolderPath": "./resources",
   "showLineNumber": false,
   "promptDelete": false,
-  "propertiesInDocument": "visible",
+  "propertiesInDocument": "source",
   "showRibbon": true
 }
