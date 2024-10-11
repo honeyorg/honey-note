@@ -1,3 +1,5 @@
+#cross-compilation #build #opencv #ffmpeg 
+
 网上也有人遇到的，交叉编译linux库时，videoio模块没有ffmpeg，导致库编出来了，编译运行也不报错，就是视频加载不出来
 
 那么如何编译时包含ffmpeg呢？根据detect_ffmpeg.cmake代码来看，可以直接给系统安装libavcodec等库，但这样跨平台会出问题。
