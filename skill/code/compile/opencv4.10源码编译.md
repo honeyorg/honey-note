@@ -1125,3 +1125,63 @@ OPENCV_FFMPEG_API void cvReleaseVideoWriter_FFMPEG(struct CvVideoWriter_FFMPEG**
 [OPenCV高级编程——OpenCV视频读写及录制技术详解](https://blog.csdn.net/weixin_62621696/article/details/140828188)
 
 思路：既然播放视频是将视频帧的cv::Mat转成了ue的Texture2D。那同理可以在程序运行时，将ue的Texture2D转成cv::Mat，然后再保存为视频文件。现在差了一个技术点，就是如何利用opencv库中集成的ffmpeg进行推流，考察是否可行
+
+不能在自定义的Runnable线程中，去将TextureRef的内容拷贝到CPU，或者说不能够调用`RHICmdList.ReadSurfaceData`，因为该函数内部会check当前是否是在渲染线程中。
+
+opencv设置视频属性
+[VideoWriterProperties](https://docs.opencv.org/4.10.0/d4/d15/group__videoio__flags__base.html#ga41c5cfa7859ae542b71b1d33bbd4d2b4)
+
+大坑，也是不容易发现的逻辑反转。。cv::Mat的构造函数有多个，其中有传width，height的，也有传Size的，也有传rows和cols的。我使用的应该是自动识别到的rows和cols的，结果我把width和height顺序传入了，导致宽高传反了，一直录不出来视频。。。。。
+
+我现在在用opencv对图片进行处理，现在是这样的。我想将一个1000x500的图片输出为500x500的图片，我的需求是图片不能被拉伸，而应该做自适应等比缩放。那么原图的1000变为500肯定缩小了一半对吧。等比的话，则原图的500应该缩小到250，对吧。我现在的需求是，目标图片500x500中，我希望原图缩放后的250的像素是在这个500的居中位置，其他像素则进行纯黑色填充，该怎么做？
+
+在OpenCV的C++版本中，你可以使用类似的步骤来实现将一张1000x500的图片等比缩放到250x250，并将其居中放置在500x500的黑色背景图片中。以下是一个完整的C++代码示例：
+
+```cpp
+#include <opencv2/opencv.hpp>
+#include <iostream>
+int main() { 
+// 读取原图片 
+cv::Mat originalImage = cv::imread("original_image.jpg"); if (originalImage.empty()) { std::cerr << "Error: Could not open or find the image!" << std::endl; return -1; } 
+// 获取原图片的尺寸 
+int originalHeight = originalImage.rows; int originalWidth = originalImage.cols; // 等比缩放原图片到250x250 
+float scaleFactor = 0.5f; int scaledWidth = static_cast<int>(originalWidth * scaleFactor); int scaledHeight = static_cast<int>(originalHeight * scaleFactor); cv::Mat scaledImage; cv::resize(originalImage, scaledImage, cv::Size(scaledWidth, scaledHeight)); 
+// 创建一个500x500的黑色背景图片 
+cv::Mat backgroundImage = cv::Mat::zeros(500, 500, CV_8UC3); // 计算缩放后图片在背景图片中的位置（居中） 
+int topLeftX = (500 - scaledWidth) / 2; int topLeftY = (500 - scaledHeight) / 2; // 将缩放后的图片粘贴到背景图片上 
+scaledImage.copyTo(backgroundImage(cv::Rect(topLeftX, topLeftY, scaledWidth, scaledHeight))); 
+// 保存或显示结果图片 
+cv::imwrite("resized_and_centered_image.jpg", backgroundImage); 
+// 或者使用 cv::imshow 来显示图片 // cv::imshow("Result Image", backgroundImage); // cv::waitKey(0); // 等待按键 // cv::destroyAllWindows(); // 销毁所有窗口 
+return 0; 
+}
+```
+
+### 解释
+
+1. **读取原图片**：使用 `cv::imread` 读取原图片，并检查是否成功读取。
+2. **获取原图片的尺寸**：使用 `originalImage.rows` 和 `originalImage.cols` 获取原图片的高度和宽度。
+3. **等比缩放原图片**：使用 `cv::resize` 按照比例缩放原图片。这里我们将宽度和高度都缩小了一半。
+4. **创建黑色背景图片**：使用 `cv::Mat::zeros` 创建一个500x500的黑色背景图片，数据类型为 `CV_8UC3`（8位无符号整型，3通道）。
+5. **计算缩放后图片在背景图片中的位置**：计算缩放后图片在背景图片中的左上角坐标，使得缩放后的图片居中。
+6. **将缩放后的图片粘贴到背景图片上**：使用 `copyTo` 方法将缩放后的图片粘贴到背景图片的相应位置。注意，这里使用了 `cv::Rect` 来指定要粘贴的区域。
+7. **保存或显示结果图片**：使用 `cv::imwrite` 保存结果图片，或者使用 `cv::imshow` 显示结果图片。如果显示图片，请确保在调用 `cv::destroyAllWindows` 之前使用 `cv::waitKey` 等待用户按键，否则窗口会立即关闭。
+
+编译并运行这段代码，你将得到一张500x500的图片，其中包含了居中放置的缩放后的原图片，其余部分被填充为黑色。
+
+
+[ffmpeg+opencv推流](https://avmedia.0voice.com/?id=42400)
+
+ffmpeg库是C语言库，直接使用其库，在C++工程中包含头文件时要用extern "C"包裹一下，否则链接阶段会有LNK2019的报错
+
+[UE插件开发引用包含第三方库头文件问题总结](https://developer.aliyun.com/article/1273167)
+
+[extern C](https://www.zhihu.com/tardis/bd/art/634091433?source_id=1001)
+
+编译通过，运行起来说插件的模块加载失败，排除了代码，发现就是当编写了ffmpeg相关代码后，我的插件模块的dll会依赖ffmpeg-xx.dll几个库，但是这几个库我放在了ThirdParty目录下，需要拷贝一份到插件的Binaries下，即和模块的dll同级即可，草。查看日志，加载失败后，输出了
+```log
+
+[2024.10.15-07.27.29:769][  0]LogWindows:   Missing import: avutil-56.dll
+[2024.10.15-07.27.29:769][  0]LogWindows:   Missing import: avcodec-58.dll
+[2024.10.15-07.27.29:769][  0]LogWindows:   Missing import: avformat-58.dll
+```
