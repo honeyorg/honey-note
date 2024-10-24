@@ -895,7 +895,7 @@ emcmake cmake .. -DCMAKE_INSTALL_PREFIX=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\
 
 最新的编译gdal的命令：
 ```shell
-emcmake cmake .. -DCMAKE_INSTALL_PREFIX=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\install -DCMAKE_PREFIX_PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty -DPROJ_ROOT=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty -DPROJ_LIBRARY=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\lib\libproj.a -DPROJ_INCLUDE_DIR=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\include -DTiff_DIR=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\lib\cmake\tiff -DRENAME_INTERNAL_TIFF_SYMBOLS=OFF
+emcmake cmake .. -DCMAKE_INSTALL_PREFIX=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\install -DCMAKE_PREFIX_PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty -DPROJ_ROOT=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty -DPROJ_LIBRARY=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\lib\libproj.a -DPROJ_INCLUDE_DIR=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\include -DTiff_DIR=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\lib\cmake\tiff -DGDAL_USE_TIFF_INTERNAL=OFF -DRENAME_INTERNAL_TIFF_SYMBOLS=OFF
 ```
 
 
@@ -1605,3 +1605,120 @@ Install the project...
 -- Installing: D:/Dev/Html5/gdalnativeforue/gdal-3.7.0/build/install/lib/pkgconfig/gdal.pc
 ```
 
+## 关于宏定义接口符号做Wrapper可能存在的问题
+
+> 如果库A有一些接口符号，库B依赖库A时，通过宏定义定义了很多库A接口同名宏，目的是为了wrapper，然后可能会出现在依赖库B时，报错说符号未定义的情况吗？
+
+是的，当库B通过宏定义重定义了库A中的一些接口符号的同名宏，并且这些宏的目的是为了提供包装（wrapper）功能时，确实可能会出现依赖库B的其他库（我们称之为库C）在链接时报告符号未定义的情况。
+
+这里的问题在于宏展开是在预处理阶段进行的，而链接是在编译后的阶段。当库B包含了对库A接口的宏定义时，这些宏在库B的编译过程中会展开为相应的包装代码。然而，这些宏展开后的代码可能并没有提供库A中原接口所必需的符号定义。
+
+当库C链接到库B时，如果库C调用了原本应该由库A提供的接口（但现在这些接口在库B中被宏包装了），链接器会查找这些接口的定义。由于库B中的宏展开并没有为这些接口提供实际的符号定义（只是提供了包装代码），链接器可能会报告符号未定义的错误。
+
+这种情况通常发生在以下几种情况中：
+
+1. **宏定义与库A接口不完全兼容**：库B中的宏可能没有完全复制库A接口的行为，或者宏展开后的代码依赖于一些未在库B中定义的额外符号。
+    
+2. **链接时未包含库A**：如果链接器在链接库C和库B时没有包含库A，那么即使库B中有宏包装，链接器也无法找到库A中原接口的定义。
+    
+3. **编译器/链接器配置问题**：有时候，编译器或链接器的配置可能会导致符号解析不正确，特别是在使用复杂的项目结构和依赖关系时。
+    
+
+为了避免这种问题，你可以考虑以下几种解决方案：
+
+- **避免宏定义**：尽可能避免使用宏来包装库接口，而是使用内联函数或模板等更安全的机制。
+    
+- **确保链接器包含所有必要的库**：在链接时确保包含所有提供必需符号定义的库。
+    
+- **使用命名空间**：如果必须使用宏，可以考虑将宏定义放在特定的命名空间中，以减少与其他代码发生冲突的可能性。
+    
+- **仔细测试**：在开发过程中仔细测试库B和依赖它的库C，以确保所有接口都按预期工作。
+    
+- **文档和沟通**：确保库B的文档清楚地说明了哪些库A的接口被宏包装了，以及这些宏的行为和限制。同时，与依赖库B的其他开发者保持沟通，以便及时解决问题。
+
+> 那现在是这样的，还是库A定义了一些接口，库B通过同名宏定义包装了库A的接口。这时，一个程序中有两个模块（将来会产出库C和库D），其中库C依赖了库A，库D依赖了库B，会出现未定义符号的情况吗？
+
+在您描述的情况下，库C依赖库A，而库D依赖库B，其中库B通过同名宏定义了库A的接口包装。这里是否会出现未定义符号的情况，取决于几个关键因素：
+
+1. **宏的展开方式**：
+    - 如果库B中的宏只是简单地将库A的接口调用重定向到库B内部的某个函数，并且这个函数在库B中有定义，那么通常不会出现未定义符号的情况。
+    - 如果宏展开后的代码依赖于库A中的某些符号，而这些符号没有在库B的编译单元中显式地包含或定义，那么当库D链接到库B时，这些符号可能会变成未定义的。
+2. **链接时的库顺序和可见性**：
+    - 在链接过程中，链接器需要找到所有被引用的符号的定义。如果库A的符号在链接库D时不可见（因为库A没有被包含在链接命令中），那么这些符号就会变成未定义的。
+    - 通常，链接器会按照链接命令中库的顺序来解析符号。如果库B在库A之前被链接，并且库B中的宏依赖于库A中的符号，那么这些符号可能无法被正确解析。
+3. **编译器/链接器的具体实现**：
+    - 不同的编译器和链接器可能有不同的符号解析策略。一些链接器可能更智能地处理符号的依赖关系，而另一些则可能要求更严格的链接顺序和可见性。
+4. **库C和库D之间的交互**：
+    - 如果库C和库D之间没有直接的符号依赖（即它们没有调用对方的接口），那么库B中的宏定义通常不会影响库C。但是，如果库C和库D共享某些公共的接口或数据结构，并且这些接口或数据结构在库A和库B中有不同的实现或包装，那么可能会出现问题。
+
+为了避免未定义符号的情况，您可以考虑以下几点：
+
+- 确保在链接过程中包含了所有必要的库。
+- 检查库B中的宏定义，确保它们不会引入对库A中未定义符号的依赖。
+- 如果可能的话，避免在库B中使用宏来包装库A的接口，而是使用内联函数、模板或其他更安全的机制。
+- 在开发过程中仔细测试库B、库C和库D，以确保它们之间的依赖关系正确无误。
+- 如果库B中的宏确实需要访问库A中的符号，请确保在链接库D时库A也是可见的。这可能需要调整链接命令中的库顺序或添加额外的链接器选项。
+
+
+
+## osgb库编译
+
+没有opengl库，编译时报错：
+```shell
+wasm-ld: error: ../../lib/libosg.a(Drawable.cpp.o): undefined symbol: glGenLists
+wasm-ld: error: ../../lib/libosg.a(Drawable.cpp.o): undefined symbol: glGenLists
+wasm-ld: error: ../../lib/libosg.a(Drawable.cpp.o): undefined symbol: glDeleteLists
+wasm-ld: error: ../../lib/libosg.a(Drawable.cpp.o): undefined symbol: glNewList
+wasm-ld: error: ../../lib/libosg.a(Drawable.cpp.o): undefined symbol: glEndList
+wasm-ld: error: ../../lib/libosg.a(Drawable.cpp.o): undefined symbol: glDeleteLists
+wasm-ld: error: ../../lib/libosg.a(Drawable.cpp.o): undefined symbol: glDeleteLists
+wasm-ld: error: ../../lib/libosg.a(Image.cpp.o): undefined symbol: glGetTexLevelParameteriv
+wasm-ld: error: ../../lib/libosg.a(Image.cpp.o): undefined symbol: glGetTexLevelParameteriv
+wasm-ld: error: ../../lib/libosg.a(Image.cpp.o): undefined symbol: glGetTexLevelParameteriv
+wasm-ld: error: ../../lib/libosg.a(Image.cpp.o): undefined symbol: glGetTexLevelParameteriv
+wasm-ld: error: ../../lib/libosg.a(Image.cpp.o): undefined symbol: glGetTexLevelParameteriv
+wasm-ld: error: ../../lib/libosg.a(Image.cpp.o): undefined symbol: glGetTexLevelParameteriv
+wasm-ld: error: ../../lib/libosg.a(Image.cpp.o): undefined symbol: glGetTexLevelParameteriv
+wasm-ld: error: ../../lib/libosg.a(Image.cpp.o): undefined symbol: glGetTexLevelParameteriv
+wasm-ld: error: ../../lib/libosg.a(Image.cpp.o): undefined symbol: glGetTexLevelParameteriv
+wasm-ld: error: ../../lib/libosg.a(Image.cpp.o): undefined symbol: glGetTexLevelParameteriv
+wasm-ld: error: ../../lib/libosg.a(Image.cpp.o): undefined symbol: glGetTexLevelParameteriv
+wasm-ld: error: ../../lib/libosg.a(Image.cpp.o): undefined symbol: glGetTexLevelParameteriv
+wasm-ld: error: ../../lib/libosg.a(Image.cpp.o): undefined symbol: glGetTexLevelParameteriv
+wasm-ld: error: too many errors emitted, stopping now (use -error-limit=0 to see all errors)
+```
+
+osg的源码中，有一个`examples/osgemscripten/CMakeLists.txt`，其关闭了很多开关，看来是一个突破口，尝试一样的配置，再次配置并编译，EGL还是报错了，于是我索性将`OSG_GLES2_AVAILABLE`也给关了，尝试编译，配置命令如下：
+
+```shell
+emcmake cmake .. -DCMAKE_INSTALL_PREFIX=D:\Dev\Html5\gdalnativeforue\osgb-3.6.5\build\install -DCMAKE_CXX_STANDARD=98 -DOSG_WINDOWING_SYSTEM=None -DBUILD_OSG_APPLICATIONS=OFF -DOSG_GL1_AVAILABLE=OFF -DOSG_GL2_AVAILABLE=OFF -DOSG_GLES2_AVAILABLE=OFF -DDYNAMIC_OPENTHREADS=OFF -DDYNAMIC_OPENSCENEGRAPH=OFF
+```
+
+我靠，编译安装通过了。在等待期间，查询了emsdk的目录，发现include下是有EGL目录的，但是在其中没有查找到egl库文件，只有一个`library_egl.js`的东西，也不知道能不能用。而osg之所以配置阶段没找到EGL模块，可能是因为如下代码导致的（`FindEGL.cmake`）：
+```cmake
+FIND_PATH( EGL_INCLUDE_DIR
+    NAMES EGL/egl.h
+    HINTS ENV EGL_DIR
+)
+
+FIND_LIBRARY(EGL_LIBRARY
+    NAMES EGL
+    HINTS ENV EGL_DIR
+    PATH_SUFFIXES lib
+)
+
+# handle the QUIETLY and REQUIRED arguments and set
+# EGL_FOUND to TRUE as appropriate
+INCLUDE( FindPackageHandleStandardArgs )
+
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(EGL
+                                  REQUIRED_VARS EGL_LIBRARY EGL_INCLUDE_DIR)
+
+MARK_AS_ADVANCED(
+    EGL_INCLUDE_DIR
+    EGL_LIBRARY
+)
+
+```
+
+头文件应该索引的到，但是库文件估计索引不到。
