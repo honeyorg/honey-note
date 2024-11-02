@@ -5,3 +5,7 @@ ffmpeg -f gdigrab -i desktop -framerate 30 -c:v libx264 -preset veryfast -maxrat
 
 录制桌面内容，既保存为本地mp4文件的同时，也进行推流操作
 
+
+https://stackoverflow.com/questions/72884815/how-to-stream-frames-from-opencv-c-code-to-video4linux-or-ffmpeg
+
+https://www.nobile-engineering.com/wordpress/index.php/2018/10/26/opencv-streaming-ffmpeg/
