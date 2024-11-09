@@ -1722,3 +1722,65 @@ MARK_AS_ADVANCED(
 ```
 
 头文件应该索引的到，但是库文件估计索引不到。
+
+
+# MEMORY64
+
+```cmake
+option(BUILD_WITH_MEMORY64 "Build with MEMORY64" OFF)
+
+if (EMSCRIPTEN)
+    if (BUILD_WITH_MEMORY64)
+        message(STATUS "Building with MEMORY64")
+        add_compile_options(-sMEMORY64=1)
+        add_link_options(-sMEMORY64=1)
+    endif()
+endif()
+```
+
+上面这个ems编译加memory64选项的代码需要放在每一个cmake工程中，我优先放在了根`CMakeLists.txt`中
+
+### 问题：
+
+编译报错`must specify -mwasm64 to process wasm64 object files`
+### 解决方案：
+
+[wasm32 object file can't be linked in wasm64 mode](https://github.com/emscripten-core/emscripten/issues/19847)
+
+
+# 构建编译命令记录
+
+注意一个细节：在windows的终端中，路径分隔符都是`\`，如果`-DXXX_PATH=D:\XXX\XXX`，得到的`CMakeCache.txt`中的该变量，是`XXX_PATH:UNINITIALIZED=D:\XXX\XXX`，必须给该变量指定变量类型，cmake才能对路径分隔符做转义，改为`-DXXX_PATH:PATH=D:\XXX\XXX`，则在缓存文件中的变量为`XXX_PATH:PATH=D:/XXX/XXX`
+
+## sqlite3
+
+用的`sqlite3-cmake`工程，命令为：
+
+```shell
+emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\sqlite3-cmake\build\install -DBUILD_WITH_MEMORY64=ON
+```
+
+## tiff
+
+```shell
+emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\gdalnativeforue\tiff-4.5.1\build\install -DBUILD_WITH_MEMORY64=ON -Dtiff-tests=OFF -Dtiff-docs=OFF -Dtiff-tools=OFF -Dtiff-contrib=OFF
+```
+
+注意：tiff-xxx这几个选项都要关闭，否则安装时会报错，报的都是编译了executable。
+
+## proj
+
+```shell
+emcmake cmake .. -DCMAKE_INSTALL_PREFIX=D:\Dev\Html5\gdalnativeforue\proj-9.2.1\build\install -DTiff_DIR=D:\Dev\Html5\gdalnativeforue\proj-9.2.1\build\thirdparty\lib\cmake\tiff -DENABLE_CURL=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_APPS=OFF -DBUILD_WITH_MEMORY64=ON -DBUILD_GIE=OFF -DBUILD_TESTING=OFF
+```
+
+## gdal
+
+```shell
+emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\install -DCMAKE_PREFIX_PATH:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty -DPROJ_ROOT:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty -DPROJ_LIBRARY:FILEPATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\lib\libproj.a -DPROJ_INCLUDE_DIR:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\include -DGDAL_USE_TIFF_INTERNAL=OFF -DRENAME_INTERNAL_TIFF_SYMBOLS=OFF -DBUILD_WITH_MEMORY64=ON -DBUILD_APPS=OFF -DBUILD_DOCS=OFF
+```
+
+注意，加上`MEMORY64`的选项之后，gdal库中的编译会有报错
+![[Pasted image 20241108173633.png]]
+解决方案：将`GPtrDiff_t`改为了`GUintBig`，编译安装通过。这里属于是修改了第三方库的源码，因此需要记录一下。
+
