@@ -21,3 +21,9 @@ ffmpeg -f gdigrab -i desktop -r 24 -c:v libx264 -preset veryfast -maxrate 1000k 
 ```shell
 ..\..\..\..\..\..\Dev\OpenZIProj\onionfiredrill-daodiao\Plugins\OnionUI\Resources\Recorder\ffmpeg.exe -f gdigrab -i desktop -r 24 -c:v libx264 -preset veryfast -maxrate 1000k -bufsize 2000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 160k -ar 44100 -ac 2 -s 1280x720 -aspect 48:9 -f flv rtmp://127.0.0.1:10035/live/76797cd021b2e0cf8d26f0375ba3ba7d
 ```
+
+
+## 问题
+
+当使用ffmpeg录屏/推流时，steamvr会出现反复崩溃重启的问题，应该是两者不兼容，改用obs进行录屏/推流可以解决此问题
+

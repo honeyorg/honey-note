@@ -1771,16 +1771,22 @@ emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\gdalnativeforue\tiff-4
 ## proj
 
 ```shell
-emcmake cmake .. -DCMAKE_INSTALL_PREFIX=D:\Dev\Html5\gdalnativeforue\proj-9.2.1\build\install -DTiff_DIR=D:\Dev\Html5\gdalnativeforue\proj-9.2.1\build\thirdparty\lib\cmake\tiff -DENABLE_CURL=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_APPS=OFF -DBUILD_WITH_MEMORY64=ON -DBUILD_GIE=OFF -DBUILD_TESTING=OFF
+emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:/Dev/Html5/gdalnativeforue/proj-9.2.1/build/install -DENABLE_CURL=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_APPS=OFF -DBUILD_WITH_MEMORY64=ON -DBUILD_GIE=OFF -DBUILD_TESTING=OFF -DSQLITE3_INCLUDE_DIR:PATH=D:/Dev/Html5/gdalnativeforue/proj-9.2.1/build/thirdparty/include -DSQLITE3_LIBRARY:FILEPATH=D:/Dev/Html5/gdalnativeforue/proj-9.2.1/build/thirdparty/lib/libsqlite3.a -DCMAKE_FIND_ROOT_PATH=D:/Dev/Html5/gdalnativeforue/proj-9.2.1/build/thirdparty
 ```
 
 ## gdal
 
 ```shell
-emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\install -DCMAKE_PREFIX_PATH:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty -DPROJ_ROOT:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty -DPROJ_LIBRARY:FILEPATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\lib\libproj.a -DPROJ_INCLUDE_DIR:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\include -DGDAL_USE_TIFF_INTERNAL=OFF -DRENAME_INTERNAL_TIFF_SYMBOLS=OFF -DBUILD_WITH_MEMORY64=ON -DBUILD_APPS=OFF -DBUILD_DOCS=OFF
+emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\install -DCMAKE_PREFIX_PATH:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty -DPROJ_ROOT:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty -DPROJ_LIBRARY:FILEPATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\lib\libproj.a -DPROJ_INCLUDE_DIR:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\include -DGDAL_USE_TIFF_INTERNAL=OFF -DRENAME_INTERNAL_TIFF_SYMBOLS=OFF -DBUILD_WITH_MEMORY64=ON -DBUILD_APPS=OFF -DBUILD_DOCS=OFF -DSQLITE3_INCLUDE_DIR:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\include -DSQLITE3_LIBRARY:FILEPATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\lib\libsqlite3.a
 ```
 
 注意，加上`MEMORY64`的选项之后，gdal库中的编译会有报错
 ![[Pasted image 20241108173633.png]]
 解决方案：将`GPtrDiff_t`改为了`GUintBig`，编译安装通过。这里属于是修改了第三方库的源码，因此需要记录一下。
+
+## osgb
+
+```shell
+emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\gdalnativeforue\osgb-3.6.5\build\install -DCMAKE_CXX_STANDARD=98 -DOSG_WINDOWING_SYSTEM=None -DBUILD_OSG_APPLICATIONS=OFF -DOSG_GL1_AVAILABLE=OFF -DOSG_GL2_AVAILABLE=OFF -DOSG_GLES2_AVAILABLE=OFF -DDYNAMIC_OPENTHREADS=OFF -DDYNAMIC_OPENSCENEGRAPH=OFF -DBUILD_WITH_MEMORY64=ON
+```
 
