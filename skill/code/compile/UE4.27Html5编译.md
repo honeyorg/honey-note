@@ -1736,6 +1736,14 @@ if (EMSCRIPTEN)
         add_link_options(-sMEMORY64=1)
     endif()
 endif()
+
+if (EMSCRIPTEN)
+    if (BUILD_WITH_MEMORY64)
+        message(STATUS "Building with MEMORY64")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s MEMORY64=1")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s MEMORY64=1")
+    endif()
+endif()
 ```
 
 上面这个ems编译加memory64选项的代码需要放在每一个cmake工程中，我优先放在了根`CMakeLists.txt`中
@@ -1750,43 +1758,73 @@ endif()
 
 # 构建编译命令记录
 
+在构建编译前，要先确保将对应版本的emsdk的磁盘路径配置到系统环境变量`PATH`中。例如我有两个版本`3.1.56`和`3.1.70`，对应的路径分别是`D:/emsdk-3.1.56`和`D:/emsdk-3.1.70`，如果需要用`3.1.70`编译则需要将`PATH`环境变量修改一下，否则可能用的emsdk的版本不对应。
+
 注意一个细节：在windows的终端中，路径分隔符都是`\`，如果`-DXXX_PATH=D:\XXX\XXX`，得到的`CMakeCache.txt`中的该变量，是`XXX_PATH:UNINITIALIZED=D:\XXX\XXX`，必须给该变量指定变量类型，cmake才能对路径分隔符做转义，改为`-DXXX_PATH:PATH=D:\XXX\XXX`，则在缓存文件中的变量为`XXX_PATH:PATH=D:/XXX/XXX`
 
+以下命令均需要在cmake工程根目录的`build`文件夹下打开终端运行。配置完毕后，再掉用`emmake make install`进行安装，可选`-j4`开启多线程编译，4即为4个并行
 ## sqlite3
 
 用的`sqlite3-cmake`工程，命令为：
 
 ```shell
-emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\sqlite3-cmake\build\install -DBUILD_WITH_MEMORY64=ON
+emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\gdalnativeforue\thirdparty -DBUILD_WITH_MEMORY64=ON
 ```
 
 ## tiff
 
 ```shell
-emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\gdalnativeforue\tiff-4.5.1\build\install -DBUILD_WITH_MEMORY64=ON -Dtiff-tests=OFF -Dtiff-docs=OFF -Dtiff-tools=OFF -Dtiff-contrib=OFF
+emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\gdalnativeforue\thirdparty -DBUILD_WITH_MEMORY64=ON -Dtiff-tests=OFF -Dtiff-docs=OFF -Dtiff-tools=OFF -Dtiff-contrib=OFF
 ```
 
 注意：tiff-xxx这几个选项都要关闭，否则安装时会报错，报的都是编译了executable。
 
 ## proj
 
+将`sqlite3`和`tiff`安装好的内容，即`install`文件夹内的内容，拷贝到该工程的`build/thirdparty`目录下。
+
 ```shell
-emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:/Dev/Html5/gdalnativeforue/proj-9.2.1/build/install -DENABLE_CURL=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_APPS=OFF -DBUILD_WITH_MEMORY64=ON -DBUILD_GIE=OFF -DBUILD_TESTING=OFF -DSQLITE3_INCLUDE_DIR:PATH=D:/Dev/Html5/gdalnativeforue/proj-9.2.1/build/thirdparty/include -DSQLITE3_LIBRARY:FILEPATH=D:/Dev/Html5/gdalnativeforue/proj-9.2.1/build/thirdparty/lib/libsqlite3.a -DCMAKE_FIND_ROOT_PATH=D:/Dev/Html5/gdalnativeforue/proj-9.2.1/build/thirdparty
+emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:/Dev/Html5/gdalnativeforue/thirdparty -DCMAKE_PREFIX_PATH:PATH=D:/Dev/Html5/gdalnativeforue/proj-9.2.1/build/thirdparty -DENABLE_CURL=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_APPS=OFF -DBUILD_WITH_MEMORY64=ON -DBUILD_GIE=OFF -DBUILD_TESTING=OFF -DSQLITE3_INCLUDE_DIR:PATH=D:/Dev/Html5/gdalnativeforue/proj-9.2.1/build/thirdparty/include -DSQLITE3_LIBRARY:FILEPATH=D:/Dev/Html5/gdalnativeforue/proj-9.2.1/build/thirdparty/lib/libsqlite3.a -DCMAKE_FIND_ROOT_PATH:PATH=D:/Dev/Html5/gdalnativeforue/proj-9.2.1/build/thirdparty
 ```
 
+注意，采用memory64编译后，生成的tiff的`TiffConfigVersion.cmake`文件中，会将`PACKAGE_VERSION`改为`4.5.1 (64bit)`，多了个` (64bit)`，会导致proj工程中的`find_package(Tiff CONFIG REQUIRED)`失败，这里注释了`TiffConfigVersion.cmake`结尾处的根据32/64位追加`PACKAGE_VERSION`后缀的代码，就能够找到Tiff了。
+
+另外需要注意，proj需要使用`sqlite3.exe`这个`exe`执行文件来生成`Proj.db`，所以在编译h5平台时，只会输出`sqlite3.js`，需要切换到`windows`版本单独编译出来一个`sqlite3.exe`并放置在`install`目录中，即`proj`的`build/thirdparty`中。
 ## gdal
 
+将`proj`的`install`中的内容和`thirdparty`中的内容拷贝到该工程的`build/thirdparty`目录下，即需要依赖`sqlite3`、`tiff`和`proj`三个库
+
 ```shell
-emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\install -DCMAKE_PREFIX_PATH:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty -DPROJ_ROOT:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty -DPROJ_LIBRARY:FILEPATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\lib\libproj.a -DPROJ_INCLUDE_DIR:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\include -DGDAL_USE_TIFF_INTERNAL=OFF -DRENAME_INTERNAL_TIFF_SYMBOLS=OFF -DBUILD_WITH_MEMORY64=ON -DBUILD_APPS=OFF -DBUILD_DOCS=OFF -DSQLITE3_INCLUDE_DIR:PATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\include -DSQLITE3_LIBRARY:FILEPATH=D:\Dev\Html5\gdalnativeforue\gdal-3.7.0\build\thirdparty\lib\libsqlite3.a
+emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:/Dev/Html5/gdalnativeforue/thirdparty -DCMAKE_PREFIX_PATH:PATH=D:/Dev/Html5/gdalnativeforue/gdal-3.7.0/build/thirdparty -DPROJ_ROOT:PATH=D:/Dev/Html5/gdalnativeforue/gdal-3.7.0/build/thirdparty -DPROJ_LIBRARY:FILEPATH=D:/Dev/Html5/gdalnativeforue/gdal-3.7.0/build/thirdparty/lib/libproj.a -DPROJ_INCLUDE_DIR:PATH=D:/Dev/Html5/gdalnativeforue/gdal-3.7.0/build/thirdparty/include -DGDAL_USE_TIFF_INTERNAL=OFF -DRENAME_INTERNAL_TIFF_SYMBOLS=OFF -DTiff_DIR:PATH=D:/Dev/Html5/gdalnativeforue/gdal-3.7.0/build/thirdparty/lib/cmake/tiff -DTIFF_INCLUDE_DIR:PATH=D:/Dev/Html5/gdalnativeforue/gdal-3.7.0/build/thirdparty/include -DTIFF_LIBRARY:FILEPATH=D:/Dev/Html5/gdalnativeforue/gdal-3.7.0/build/thirdparty/lib/libtiff.a -DBUILD_WITH_MEMORY64=ON -DBUILD_APPS=OFF -DBUILD_DOCS=OFF -DSQLITE3EXT_INCLUDE_DIR:PATH=D:/Dev/Html5/gdalnativeforue/gdal-3.7.0/build/thirdparty/include -DSQLITE3_INCLUDE_DIR:PATH=D:/Dev/Html5/gdalnativeforue/gdal-3.7.0/build/thirdparty/include -DSQLITE3_LIBRARY:FILEPATH=D:/Dev/Html5/gdalnativeforue/gdal-3.7.0/build/thirdparty/lib/libsqlite3.a -DACCEPT_MISSING_SQLITE3_MUTEX_ALLOC:BOOL=ON -DACCEPT_MISSING_SQLITE3_RTREE:BOOL=ON -DGDAL_USE_SQLITE3:BOOL=OFF -DGDAL_IGNORE_FAILED_CONDITIONS:BOOL=ON
 ```
 
 注意，加上`MEMORY64`的选项之后，gdal库中的编译会有报错
 ![[Pasted image 20241108173633.png]]
 解决方案：将`GPtrDiff_t`改为了`GUintBig`，编译安装通过。这里属于是修改了第三方库的源码，因此需要记录一下。
 
+注意，使用`emsdk-3.1.70`版本后，在配置阶段报错了，输出：
+```shell
+CMake Error at cmake/helpers/CheckDependentLibraries.cmake:538 (message):
+  D:/Dev/Html5/gdalnativeforue/gdal-3.7.0/build/thirdparty/lib/libsqlite3.a
+  lacks mutex support! Access to SQLite3 databases from multiple threads will
+  be unsafe.  Define the ACCEPT_MISSING_SQLITE3_MUTEX_ALLOC:BOOL=ON CMake
+  variable if you want to build despite this limitation.
+```
+
+但是我检查了`sqlite3`编译的代码选项，其是开启了线程安全选项的，因此也支持互斥锁实现。这里按照提示在gdal工程中加一个`-DACCEPT_MISSING_SQLITE3_MUTEX_ALLOC:BOOL=ON`
+
+最终：gdal使用`-DGDAL_USE_SQLITE3:BOOL=OFF`关闭了对sqlite3的使用，这里反复测试过了，如果是wasm32版本，一切正常，但是wasm64版本的`libsqlite3.a`的符号就是不存在，从而会导致`libgdal.a`中`undefined symbol sqlite3_xxx_xxx`打包失败。
 ## osgb
 
 ```shell
 emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\gdalnativeforue\osgb-3.6.5\build\install -DCMAKE_CXX_STANDARD=98 -DOSG_WINDOWING_SYSTEM=None -DBUILD_OSG_APPLICATIONS=OFF -DOSG_GL1_AVAILABLE=OFF -DOSG_GL2_AVAILABLE=OFF -DOSG_GLES2_AVAILABLE=OFF -DDYNAMIC_OPENTHREADS=OFF -DDYNAMIC_OPENSCENEGRAPH=OFF -DBUILD_WITH_MEMORY64=ON
 ```
 
+
+# 浏览器开启wasm memory64
+
+![[Pasted image 20241129111744.png]]
+
+运行UE的H5网页时，遇到如上报错，原因是chrome浏览器未启用该特性选项。在标签页中输入`chrome://flags/`，找到`WebAssembly Memory64`设置为`Enabled`后重启浏览器即可。
+
+![[Pasted image 20241129111856.png]]
