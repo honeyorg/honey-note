@@ -288,14 +288,7 @@ Compute sharders not supported for use in OpenGL.
 
 ![[Pasted image 20241023113704.png]]
 
-可以看到应该跟OpenGL有关系，查询了一些资料，推测是蓝图材质中使用了着色器代码，而UE在蓝图层面只支持HLSL着色器语言，且不能自动转换为GLSL。通过挨个检查，找到了API插件有一个着色器语言节点，删掉了。CesiumForUnreal有一个，删掉了，还是不通过。准备单独放插件挨个排查。
-
-[在UE中以HLSL着色器代码生成材质](https://zhuanlan.zhihu.com/p/674778529)
-
-现在只放了CesiumForUnreal一个插件，重新启动编辑器，发现编辑器开始重新编译Shader了。另外在打包HTML5时，编译Shader也比之前多了许多数量。但最终打包成功了。为了对照，我新建了一个空工程，放了CesiumForUnreal没有删除HLSL材质节点的代码，也尝试打包了，但是打包也成功了，说明打包失败和那个HLSL的自定义材质节点没有关系。。
-
-再次将API插件中的所有蓝图删除，等了一段时间，打包时cook数量有变化了，打包成功了。问题应该出在API插件的某蓝图资源上。
-
+注意看这里的`HairStrands`，这是一个ue的插件，其代码内部有shader相关资源，在其模块初始化时注册了自己的shader脚本，从而导致了打包h5失败。反向查找，发现`MeshModelingToolSet`插件依赖了这个插件，而`OpenZIAPI`插件又将`MeshModelingToolSet`插件开启了，故导致打包时只要放了`OpenZIAPI`插件就会失败。将`MeshModelingToolSet`插件禁用，打包通过！
 
 ## 空工程默认打包到HTML5运行报Uncaught ReferenceError: miniTempWebGLIntBuffers is not defined
 

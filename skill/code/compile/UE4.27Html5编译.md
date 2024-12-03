@@ -1820,7 +1820,11 @@ CMake Error at cmake/helpers/CheckDependentLibraries.cmake:538 (message):
 emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\gdalnativeforue\osgb-3.6.5\build\install -DCMAKE_CXX_STANDARD=98 -DOSG_WINDOWING_SYSTEM=None -DBUILD_OSG_APPLICATIONS=OFF -DOSG_GL1_AVAILABLE=OFF -DOSG_GL2_AVAILABLE=OFF -DOSG_GLES2_AVAILABLE=OFF -DDYNAMIC_OPENTHREADS=OFF -DDYNAMIC_OPENSCENEGRAPH=OFF -DBUILD_WITH_MEMORY64=ON
 ```
 
+## assimp
 
+```shell
+emcmake cmake .. -DCMAKE_INSTALL_PREFIX:PATH=D:\Dev\Html5\assimp\thirdparty -DBUILD_WITH_MEMORY64=ON -DASSIMP_WARNINGS_AS_ERRORS:BOOL=OFF
+```
 # 浏览器开启wasm memory64
 
 ![[Pasted image 20241129111744.png]]
