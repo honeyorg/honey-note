@@ -309,3 +309,101 @@ showErrorDialog @ HtmlLite.UE4.js:970Understand this error
 HtmlLite.html:1 [.WebGL-000052E400116200] GL_INVALID_OPERATION: No defined conversion between clear value and attachment format.Understand this warning
 ```
 
+MeshModelingToolset.uplugin
+```json
+		{
+			"Name": "ModelingOperatorsEditorOnly",
+			"Type": "Editor",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [ "Win64" ]
+		},
+		{
+			"Name": "MeshModelingToolsEditorOnly",
+			"Type": "Editor",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [ "Win64" ]
+		}
+```
+
+## 开启r.ShaderDevelopmentMode
+
+在引擎源码中的`Engine/Config/ConsoleVariables.ini`中，搜索`r.ShaderDevelopmentMode`，有一个被注释的配置项`r.ShaderDevelopmentMode=1`，放开该配置，重新启动编辑器。
+
+## 发丝系统（HairStrands）
+
+在`HairStrandsInterface.cpp`中，定义了如下命令行属性：
+```cpp
+
+static TAutoConsoleVariable<int32> CVarHairStrandsRaytracingEnable(
+	TEXT("r.HairStrands.Raytracing"), 1,
+	TEXT("Enable/Disable hair strands raytracing geometry. This is anopt-in option per groom asset/groom instance."),
+	ECVF_RenderThreadSafe | ECVF_Scalability);
+
+static int32 GHairStrandsPluginEnable = 0;
+
+static TAutoConsoleVariable<int32> CVarHairStrandsGlobalEnable(
+	TEXT("r.HairStrands.Enable"), 1,
+	TEXT("Enable/Disable the entire hair strands system. This affects all geometric representations (i.e., strands, cards, and meshes)."),
+	ECVF_RenderThreadSafe | ECVF_Scalability);
+
+static TAutoConsoleVariable<int32> CVarHairStrandsEnable(
+	TEXT("r.HairStrands.Strands"), 1,
+	TEXT("Enable/Disable hair strands rendering"),
+	ECVF_RenderThreadSafe | ECVF_Scalability);
+
+static TAutoConsoleVariable<int32> CVarHairCardsEnable(
+	TEXT("r.HairStrands.Cards"), 1,
+	TEXT("Enable/Disable hair cards rendering. This variable needs to be turned on when the engine starts."),
+	ECVF_RenderThreadSafe | ECVF_Scalability);
+
+static TAutoConsoleVariable<int32> CVarHairMeshesEnable(
+	TEXT("r.HairStrands.Meshes"), 1,
+	TEXT("Enable/Disable hair meshes rendering. This variable needs to be turned on when the engine starts."),
+	ECVF_RenderThreadSafe | ECVF_Scalability);
+
+static TAutoConsoleVariable<int32> CVarHairStrandsBinding(
+	TEXT("r.HairStrands.Binding"), 1,
+	TEXT("Enable/Disable hair binding, i.e., hair attached to skeletal meshes."),
+	ECVF_RenderThreadSafe | ECVF_Scalability);
+
+static TAutoConsoleVariable<int32> CVarHairStrandsSimulation(
+	TEXT("r.HairStrands.Simulation"), 1,
+	TEXT("Enable/disable hair simulation"),
+	ECVF_RenderThreadSafe | ECVF_Scalability);
+```
+
+应该可以控制发丝系统的可用性
+
+
+## Compute Shader计算着色器
+
+OpenGL ES 3.1版本开始支持的`Compute Shader`，`WebGL 2.0`是`OpenGL ES 3.0`的子集故不支持`Compute Shader`，打包HTML5时要注意`WebGL`的版本。
+
+[Lacking compute support (HTML5)](https://github.com/godotengine/godot-proposals/issues/2177)
+
+[Fork of UE 4.27.2 with HTML5 platform using ES3 shaders](https://github.com/UnrealEngineHTML5/Documentation/issues/147)
+
+人家的`UE4`fork版本库
+[4.27-html5-es3](https://github.com/SpeculativeCoder/UnrealEngine)
+
+人家有一个分支`5.5-html5-es3-dev`，可能正在开发支持UE5，HTML5版本的引擎。
+
+开启多线程支持，打包时的链接参数：
+```shell
+UATHelper: 打包 (HTML5):   LinkArguments:   -fdiagnostics-format=msvc -Wdelete-non-virtual-dtor -Wno-switch -Wno-tautological-constant-out-of-range-compare -Wno-tautological-compare -Wno-tautological-undefined-compare -Wno-inconsistent-missing-override -Wno-undefined-var-template -Wno-invalid-offsetof -Wno-gnu-string-literal-operator-template -Wno-final-dtor-n
+on-final-class -Wno-implicit-int-float-conversion -Wno-single-bit-bitfield-constant-conversion -Wno-invalid-unevaluated-string -Wno-deprecated-builtins -Wno-shadow -Wno-deprecated-literal-operator -O1 -fno-inline-functions -s USE_PTHREADS=1 -DEXPERIMENTAL_OPENGL_RHITHREAD=1 --profiling-funcs --emit-symbol-map -s ASSERTIONS=1 -s GL_ASSERTIONS=1 -g1 -s ALLOW_M
+EMORY_GROWTH=1 -s INITIAL_MEMORY=600MB -s MAXIMUM_MEMORY=4GB -s PTHREAD_POOL_SIZE=4 -s STACK_SIZE=512MB -s USE_WEBGL2=1 -s OFFSCREEN_FRAMEBUFFER=1 -s PROXY_TO_PTHREAD=1 -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -s GL_PREINITIALIZED_CONTEXT=1 -s EXPORTED_FUNCTIONS="['_main', '_on_fatal', '_emscripten_webgl_get_current_context', '_emscripten_webgl_make_con
+text_current', '_htons', '_ntohs', '_malloc']" -s EXPORTED_RUNTIME_METHODS="['stringToAscii', 'ccall', 'cwrap']" -s ERROR_ON_UNDEFINED_SYMBOLS=1 -s NO_EXIT_RUNTIME=1 -s LLD_REPORT_UNDEFINED -s CASE_INSENSITIVE_FS=1 -s FORCE_FILESYSTEM=1 -lidbfs.js
+```
+
+不开启多线程支持，打包时的链接参数：
+```shell
+UATHelper: 打包 (HTML5):   LinkArguments:   -fdiagnostics-format=msvc -Wdelete-non-virtual-dtor -Wno-switch -Wno-tautological-constant-out-of-range-compare -Wno-tautological-compare -Wno-tautological-undefined-compare -Wno-inconsistent-missing-override -Wno-undefined-var-template -Wno-invalid-offsetof -Wno-gnu-string-literal-operator-template -Wno-final-dtor-n
+on-final-class -Wno-implicit-int-float-conversion -Wno-single-bit-bitfield-constant-conversion -Wno-invalid-unevaluated-string -Wno-deprecated-builtins -Wno-shadow -Wno-deprecated-literal-operator -O1 -fno-inline-functions --profiling-funcs --emit-symbol-map -s ASSERTIONS=1 -s GL_ASSERTIONS=1 -g1 -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=600MB -s MAXIMUM_ME
+MORY=16GB -s MEMORY64=1 -s STACK_SIZE=512MB -s USE_WEBGL2=1 -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -s GL_PREINITIALIZED_CONTEXT=1 -s EXPORTED_FUNCTIONS="['_main', '_on_fatal', '_emscripten_webgl_get_current_context', '_emscripten_webgl_make_context_current', '_htons', '_ntohs', '_malloc']" -s EXPORTED_RUNTIME_METHODS="['stringToAscii', 'ccall', 'cwrap
+']" -s ERROR_ON_UNDEFINED_SYMBOLS=1 -s NO_EXIT_RUNTIME=1 -s LLD_REPORT_UNDEFINED -s CASE_INSENSITIVE_FS=1 -s FORCE_FILESYSTEM=1 -lidbfs.js
+```
+
+## 打包记录
+
+插件`OpenZIAPIExtend`的`AxesTool`模块`AxesTool.Build.cs`中，依赖了`MeshModelingToolset`插件的`ModelingComponents`和`MeshModelingTools`两个模块，此前依赖是因为要做模型轻量化，后来轻量化功能屏蔽了，所以这两个模块目前不需要依赖了，禁用依赖这俩模块后，代码照样可以编译过，此时再打包，就不会有`HairStrands`相关的Cook报错了。
