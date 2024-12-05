@@ -44,3 +44,11 @@ goderyu          87545   0.5  3.0 411859952 496016 s006  SN   11:03下午   0:01
 当然也可以使用数据库软件如`Navicat`去连接`mysql`数据库。
 
 修改密码可以在连接了数据库后用此查询语句`ALTER USER 'root'@'localhost' IDENTIFIED BY 'new_password';`进行修改
+
+## 启动服务
+
+`bin/mysqld --user=mysql &`
+
+## 停止服务
+
+`bin/mysqladmin -u root -p shutdown`
