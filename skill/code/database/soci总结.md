@@ -21,6 +21,25 @@ We recommend Homebrew bison
 
 因此我又通过`brew install bison`安装了`bison`
 
-结果配置阶段还是报错，后来通过调试cmake代码，发现找到的`bison`不是`/opt/homebrew/opt/`下的，故直接添加`-DBISON_EXECUTABLE=/opt/homebrew/opt/bison/bin/bison`，配置成功！
+结果配置阶段还是报错，后来通过调试`cmake`代码，发现找到的`bison`不是`/opt/homebrew/opt/`下的，故直接添加`-DBISON_EXECUTABLE=/opt/homebrew/opt/bison/bin/bison`，配置成功！
 
-然后在cmake的编译目标中选择了`mysqlclient`，生成了我需要的`libmysqlclient.a`
+然后在`cmake`的编译目标中选择了`mysqlclient`，生成了我需要的`libmysqlclient.a`
+
+但是这个只是`soci`所需的库，并没有部署`mysql`服务，通过`install`安装`mysql`所有内容，其中的`bin`下有`mysqld`等可执行程序，这就是关键了。
+
+我将`install`安装在了`/usr/local/mysql`目录下，并创建了`/usr/local/mysql/data`这个`data`目录。
+
+之后在终端中来到`/user/local/mysql`目录下，输入`bin/mysqld --initialize --user=mysql`，其为我创建了`mysql`的默认账户`root`并生成了一个临时密码，记住这个密码。
+
+然后再输入`bin/mysqld_safe --user=mysql &`，此时终端会被阻塞，`mysql`服务已经启动了，默认是`localhost:3306`
+
+如果想检查服务是否启动，则输入`ps aux | grep mysqld`。如果能看到类似如下信息这说明服务在运行：
+
+```shell
+goderyu          87545   0.5  3.0 411859952 496016 s006  SN   11:03下午   0:01.89 /usr/local/mysql/bin/mysqld --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data --plugin-dir=/usr/local/mysql/lib/plugin --log-error=goderyudeMacBook-Pro.local.err --pid-file=goderyudeMacBook-Pro.local.pid
+```
+
+此后再开一个终端，输入`bin/mysql -u root -p`，这时会要求输入密码，请输入之前所说的生成的临时密码。验证成功后，终端会进入`mysql>`状态。
+
+当然也可以使用数据库软件如`Navicat`去连接`mysql`数据库。
+
