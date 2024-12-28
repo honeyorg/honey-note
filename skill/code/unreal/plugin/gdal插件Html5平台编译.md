@@ -407,3 +407,10 @@ MORY=16GB -s MEMORY64=1 -s STACK_SIZE=512MB -s USE_WEBGL2=1 -s MIN_WEBGL_VERSION
 ## 打包记录
 
 插件`OpenZIAPIExtend`的`AxesTool`模块`AxesTool.Build.cs`中，依赖了`MeshModelingToolset`插件的`ModelingComponents`和`MeshModelingTools`两个模块，此前依赖是因为要做模型轻量化，后来轻量化功能屏蔽了，所以这两个模块目前不需要依赖了，禁用依赖这俩模块后，代码照样可以编译过，此时再打包，就不会有`HairStrands`相关的Cook报错了。
+
+
+```shell
+UATHelper: 打包 (HTML5):   Remember to build the main file with `-sFORCE_FILESYSTEM` so that it includes support for loading this file package
+UATHelper: 打包 (HTML5):   warning: file packager is creating an asset bundle of 2424 MB. this is very large, and browsers might have trouble loading it. see https://hacks.mozilla.org/2015/02/synchronous-execution-and-filesystem-access-in-emscripten/
+```
+
