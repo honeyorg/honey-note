@@ -1,6 +1,6 @@
 #obsidian 
 
-[[obsidian插件常用总结]]
+[[Obsidian插件常用总结]]
 # 概述
 
 > [!quote]+ 插件概述

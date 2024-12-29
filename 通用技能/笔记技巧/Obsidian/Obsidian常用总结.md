@@ -1,3 +1,4 @@
+#obsidian 
 ## Callout语法
 
 ### 基本使用

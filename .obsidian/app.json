@@ -4,7 +4,7 @@
   "vimMode": true,
   "newFileLocation": "current",
   "alwaysUpdateLinks": true,
-  "attachmentFolderPath": "./resources",
+  "attachmentFolderPath": "./Resources",
   "showLineNumber": false,
   "promptDelete": false,
   "propertiesInDocument": "source",
