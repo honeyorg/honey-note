@@ -84,6 +84,32 @@ goderyu          87545   0.5  3.0 411859952 496016 s006  SN   11:03下午   0:01
 
 而`into_type_ptr`是通过特化模板函数`do_into`返回值返回出去的
 
+来看一个`into`模板函数的特化：
+
+```c++
+template <typename T>
+details::into_type_ptr into(std::vector<T> & t,
+    std::size_t begin, std::size_t & end)
+{
+    return details::do_into(t, begin, &end,
+        typename details::exchange_traits<std::vector<T> >::type_family());
+}
+```
+
+通过`do_into`模板函数特化来进行构造，接着看`do_into`的特化实现：
+
+```c++
+template <typename T>
+into_type_ptr do_into(std::vector<T> & t,
+    std::size_t begin, std::size_t * end, basic_type_tag)
+{
+    return into_type_ptr(new into_type<std::vector<T> >(t, begin, end));
+}
+```
+
+所以如果想要扩展支持`TArray`类型，**特化模板类`into_type<TArray<T>>`是必须的**
+
+
 `into_type_ptr`是个别名，原始类型是`typedef type_ptr<into_type_base> into_type_ptr;`
 
 那么反推可以得到，`std::vector`走的是：
@@ -103,4 +129,288 @@ class SOCI_DECL vector_into_type : public into_type_base
 };
 ```
 
-可以看出继承了`into_type_base`
+可以看出继承了`into_type_base`，而`type_ptr`只是一个包装类，代码如下：
+
+```c++
+template <typename T>
+class type_ptr
+{
+public:
+    type_ptr(T * p) : p_(p) {}
+    ~type_ptr() { delete p_; }
+
+    T * get() const { return p_; }
+    void release() const { p_ = 0; }
+
+private:
+    mutable T * p_;
+};
+```
+
+回到`vector_into_type`类实现上看一下原理：
+其内部成员变量有几个关键的：
+- `void* data_`：待存储的数组头指针
+- `std::vector<indicator> * indVec_`：缓存后端数据库用的
+- `std::size_t begin_`：待存储的数组头
+- `std::size_t* end_`：待存储的数组尾
+该类有几个函数，实现都没啥要注意的，主要是看`define`函数：
+
+```c++
+void vector_into_type::define(statement_impl & st, int & position)
+{
+    if (backEnd_ == NULL)
+    {
+        backEnd_ = st.make_vector_into_type_backend();
+    }
+
+    if (end_ != NULL)
+    {
+        backEnd_->define_by_pos_bulk(position, data_, type_, begin_, end_);
+    }
+    else
+    {
+        backEnd_->define_by_pos(position, data_, type_);
+    }
+}
+```
+
+这个位置对后端数据库类对象`backEnd_`调用`define_by_pos[_bulk]`，传递了`void* data_`，这个很关键，在后端数据库封装实现中，查阅源码得知，写死了会将这个`void* data_`通过`static_cast`转成`std::vector<T>*`。并且获取数组大小和设置数组大小均是先转型成`std::vector`，再分别调用`std::vector`的`size()`和`resize()`接口。所以到这一步，就**验证了这个`void* data_`不能想当然的赋值为`TArray`的头指针**
+
+> 需要找一种策略，通过持有一个`std::vector`对象来承接从数据库查询到的数据。该数据通过`into`流程存储在`std::vector`中，需要找到存储完成的代码点，在这里进行扩展，通过`拷贝/移动`的方式转存在`TArray`中。
+
+再观察`conversion_into_type`这个模板类，尤其是针对`std::vector`的特化类：
+
+```c++
+template <typename T>
+class conversion_into_type<std::vector<T> >
+    : private base_vector_holder<T>,
+      public into_type<std::vector<typename type_conversion<T>::base_type> >
+{
+public:
+    typedef typename std::vector
+        <
+            typename type_conversion<T>::base_type
+        > base_type;
+
+    conversion_into_type(std::vector<T> & value,
+        std::size_t begin = 0, std::size_t * end = NULL)
+        : base_vector_holder<T>(value.size()),
+        into_type<base_type>(
+            base_vector_holder<T>::vec_, ownInd_, begin, end),
+        value_(value),
+        ownInd_(),
+        ind_(ownInd_),
+        begin_(begin),
+        end_(end)
+    {
+        user_ranges_ = end != NULL;
+    }
+
+    conversion_into_type(std::vector<T> & value, std::vector<indicator> & ind,
+        std::size_t begin = 0, std::size_t * end = NULL)
+        : base_vector_holder<T>(value.size()),
+        into_type<base_type>(
+            base_vector_holder<T>::vec_, ind, begin, end),
+        value_(value),
+        ind_(ind),
+        begin_(begin),
+        end_(end)
+    {
+        user_ranges_ = end != NULL;
+    }
+
+    std::size_t size() const override
+    {
+        // the user might have resized his vector in the meantime
+        // -> synchronize the base-value mirror to have the same size
+
+        std::size_t const userSize = value_.size();
+        base_vector_holder<T>::vec_.resize(userSize);
+
+        return into_type<base_type>::size();
+    }
+
+    void resize(std::size_t sz) override
+    {
+        into_type<base_type>::resize(sz);
+
+        std::size_t actual_size = base_vector_holder<T>::vec_.size();
+        value_.resize(actual_size);
+        ind_.resize(actual_size);
+    }
+
+private:
+    void convert_from_base() override
+    {
+        if (user_ranges_)
+        {
+            for (std::size_t i = begin_; i != *end_; ++i)
+            {
+                type_conversion<T>::from_base(
+                    base_vector_holder<T>::vec_[i], ind_[i], value_[i]);
+            }
+        }
+        else
+        {
+            std::size_t const sz = base_vector_holder<T>::vec_.size();
+
+            for (std::size_t i = 0; i != sz; ++i)
+            {
+                type_conversion<T>::from_base(
+                    base_vector_holder<T>::vec_[i], ind_[i], value_[i]);
+            }
+        }
+    }
+
+    std::vector<T> & value_;
+
+    std::vector<indicator> ownInd_;
+
+    // ind_ refers to either ownInd_, or the one provided by the user
+    // in any case, ind_ refers to some valid vector of indicators
+    // and can be used by conversion routines
+    std::vector<indicator> & ind_;
+
+    std::size_t begin_;
+    std::size_t * end_;
+    bool user_ranges_;
+
+    SOCI_NOT_COPYABLE(conversion_into_type)
+};
+```
+
+几个关键点：
+- `size`接口：获取数组大小，它这里通过用户持有的`value_`引用，获取其大小，将底层需要用的`base_vector_holder<T>::vec_`的大小进行了`resize`同步。为什么`::vec_`就是底层持有而`value_`是用户持有呢？因为`value_`是被构造函数中的第一个参数`std::vector& value_`赋值的，而同时在构造函数中构造`into_type`时，传入的`std::vector&`用来承接数据库数据的`vector`是`::vec_`。从这里可以看出，已经进行了隔离，那就可以从这里入手，将用户传入的`std::vector`改为`TArray`，而传给后端的还是保持`std::vector`。那么什么时候能将数据从`std::vector`转移到`TArray`呢？看后面的`convert_from_base`接口
+- `resize`接口：和上面同理，既然已经理清楚了隔离的两个数组，`resize`的实现就好理解了，其获取了后端持有的`::vec_.size()`，然后对用户持有的`value_.resize`，这里就可以改成`TArray`的重置数组大小的方法`value_.SetNum`。
+- `convert_from_base`接口：很关键，将其中的`value_[i]`更换为`TArray`对象的指定索引的地址，这样就能将数据转移到`TArray`中。
+
+
+理清思路后，我实现了`conversion_into_type`的`TArray`特化模板类：
+
+```c++
+        template <typename T>
+        class conversion_into_type<TArray<T>>
+            : private base_vector_holder<T>,
+              public into_type<std::vector<typename type_conversion<T>::base_type>>
+        {
+        public:
+            typedef typename std::vector<
+                typename type_conversion<T>::base_type>
+                base_type;
+
+            conversion_into_type(TArray<T> &value,
+                                 std::size_t begin = 0, std::size_t *end = NULL)
+                : base_vector_holder<T>(value.Num()),
+                  into_type<base_type>(
+                      base_vector_holder<T>::vec_, ownInd_, begin, end),
+                  value_(value),
+                  ownInd_(),
+                  ind_(ownInd_),
+                  begin_(begin),
+                  end_(end)
+            {
+                user_ranges_ = end != NULL;
+            }
+
+            conversion_into_type(TArray<T> &value, std::vector<indicator> &ind,
+                                 std::size_t begin = 0, std::size_t *end = NULL)
+                : base_vector_holder<T>(value.Num()),
+                  into_type<base_type>(
+                      base_vector_holder<T>::vec_, ind, begin, end),
+                  value_(value),
+                  ind_(ind),
+                  begin_(begin),
+                  end_(end)
+            {
+                user_ranges_ = end != NULL;
+            }
+
+            std::size_t size() const override
+            {
+                // the user might have resized his vector in the meantime
+                // -> synchronize the base-value mirror to have the same size
+
+                std::size_t const userSize = value_.Num();
+                base_vector_holder<T>::vec_.resize(userSize);
+
+                return into_type<base_type>::size();
+            }
+
+            void resize(std::size_t sz) override
+            {
+                into_type<base_type>::resize(sz);
+
+                std::size_t actual_size = base_vector_holder<T>::vec_.size();
+                value_.SetNum(actual_size);
+                ind_.resize(actual_size);
+            }
+
+        private:
+            void convert_from_base() override
+            {
+                if (user_ranges_)
+                {
+                    for (std::size_t i = begin_; i != *end_; ++i)
+                    {
+                        type_conversion<T>::from_base(
+                            base_vector_holder<T>::vec_[i], ind_[i], value_[i]);
+                    }
+                }
+                else
+                {
+                    std::size_t const sz = base_vector_holder<T>::vec_.size();
+
+                    for (std::size_t i = 0; i != sz; ++i)
+                    {
+                        type_conversion<T>::from_base(
+                            base_vector_holder<T>::vec_[i], ind_[i], value_[i]);
+                    }
+                }
+            }
+
+            TArray<T> &value_;
+
+            std::vector<indicator> ownInd_;
+
+            // ind_ refers to either ownInd_, or the one provided by the user
+            // in any case, ind_ refers to some valid vector of indicators
+            // and can be used by conversion routines
+            std::vector<indicator> &ind_;
+
+            std::size_t begin_;
+            std::size_t *end_;
+            bool user_ranges_;
+
+            SOCI_NOT_COPYABLE(conversion_into_type)
+        };
+```
+
+可以看到这里直接将用户持有的`std::vector`全部换成了`TArray`，后端持有的数组保持`std::vector`不变，编译报错，说没有对应的`exchange_traits`特化模板。又添加了
+
+```c++
+        template <typename T>
+        struct exchange_traits<TArray<T>>
+        {
+            typedef typename exchange_traits<T>::type_family type_family;
+            enum
+            {
+                x_type = exchange_traits<T>::x_type
+            };
+        };
+```
+
+至此编译通过，写了测试代码来查询数据：
+
+```c++
+		TArray<int> ids;
+		ids.SetNumUninitialized(10);
+		sql << "SELECT id FROM users", soci::into(ids);
+
+		UE_LOG(LogHoney, Log, TEXT("Query result: %d"), ids.Num());
+```
+预期输出数组尺寸为`1`，但是输出结果为`10`，数组大小没重置
+
+```log
+LogHoney: Query result: 10
+```
+
