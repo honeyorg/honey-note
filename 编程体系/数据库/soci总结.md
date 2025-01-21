@@ -52,3 +52,55 @@ goderyu          87545   0.5  3.0 411859952 496016 s006  SN   11:03下午   0:01
 ## 停止服务
 
 `bin/mysqladmin -u root -p shutdown`
+
+
+# 源码解读
+
+## 流式传输时逗号操作符重载原理
+
+```c++
+    once_temp_type & operator,(into_type_ptr const &);
+    once_temp_type & operator,(use_type_ptr const &);
+
+    template <typename T, typename Indicator>
+    once_temp_type &operator,(into_container<T, Indicator> const &ic)
+    {
+        rcst_->exchange(ic);
+        return *this;
+    }
+    template <typename T, typename Indicator>
+    once_temp_type &operator,(use_container<T, Indicator> const &uc)
+    {
+        rcst_->exchange(uc);
+        return *this;
+    }
+```
+
+可以看到，能接受四种类型参数：
+- `into_type_ptr`
+- `use_type_ptr`
+- `into_container`
+- `use_container`
+
+而`into_type_ptr`是通过特化模板函数`do_into`返回值返回出去的
+
+`into_type_ptr`是个别名，原始类型是`typedef type_ptr<into_type_base> into_type_ptr;`
+
+那么反推可以得到，`std::vector`走的是：
+
+```c++
+template <typename T>
+class into_type<std::vector<T> > : public vector_into_type
+{
+};
+```
+
+集成的父类`vector_into_type`的结构为：
+
+```c++
+class SOCI_DECL vector_into_type : public into_type_base
+{
+};
+```
+
+可以看出继承了`into_type_base`
