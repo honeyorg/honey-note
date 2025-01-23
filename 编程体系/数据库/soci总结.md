@@ -52,3 +52,37 @@ goderyu          87545   0.5  3.0 411859952 496016 s006  SN   11:03下午   0:01
 ## 停止服务
 
 `bin/mysqladmin -u root -p shutdown`
+
+## 循环执行SQL
+
+不建议循环体内每次执行`sql`语句，因为每次都要解析语句进行准备
+
+规范做法：使用`soci::statement`
+
+例如：
+
+```c++
+int i; statement st = (sql.prepare << "insert into numbers(value) values(:val)", use(i));
+for (i = 0; i != 100; ++i)
+{
+  st.execute(true);
+}
+```
+
+## 封装TArray支持报错汇总
+
+```log
+Error: Vectors of size 0 are not allowed while executing "select * from user".
+```
+
+最终查看了源码及文档，`soci`说不支持对`orm`类型的批处理，即不支持`into<std::vector<UserType>>`和`user<std::vector<UserType>>`，所以也没法扩展封装`TArray`类型的，只能换一种实现方案，通过`while(st.fetch())`遍历查询的数据，执行组装数组。
+
+## Undefined symbols for architecture arm64
+
+```log
+Undefined symbols for architecture arm64
+"typeinfo for UObject", referenced from:
+```
+
+这个问题非常恶心，是出现在我集成`soci`库时，因为其库使用了`rtti`特性，所以我在`Build.cs`中设置了`bUseRTTI=true;`，结果就是因为开启了`rtti`，导致我的所有`UE的UObject及其子类`都没有办法编译通过。需要关了该选项。无奈查看了`soci`源码中使用了`typeid`的地方，发现只有一个`check_ptr_cast`接口使用了，而这个接口只在`get_from_uses`接口中使用了，其只是提供了一种保障，就是确保在使用`use`接口从调用端向数据库后端提供数据时，和数据库列的类型不匹配时抛出异常的。那我这里只能将代码注释了，会损失一部分完整性，但是能解决掉集成的问题。
+
