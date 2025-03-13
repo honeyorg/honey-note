@@ -469,3 +469,36 @@ while (st.fetch())
                    ")";
             sql.commit();
 ```
+
+# Doc
+## Sugar
+
+The most exposed and promoted interface supports the syntax sugar that makes SOCI similar in look and feel to embedded SQL. The example of application code using this interface is:
+
+```
+session sql("postgresql://dbname=mydb");
+
+int id = 123;
+string name;
+
+sql << "select name from persons where id = :id", into(name), use(id);
+```
+
+## Core
+
+The above example is equivalent to the following, more explicit sequence of calls:
+
+```
+session sql("postgresql://dbname=mydb");
+
+int id = 123;
+string name;
+
+statement st(sql);
+st.exchange(into(name));
+st.exchange(use(id));
+st.alloc();
+st.prepare("select name from persons where id = :id");
+st.define_and_bind();
+st.execute(true);
+```
